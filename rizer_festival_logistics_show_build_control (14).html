@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot" class="h-full theme-modern bg-black text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RIZER | Festival Riser Logistics & Show Control</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- QRCode.js Generator via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* Google Fonts: UI & Export font family options */
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Roboto:wght@400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;700;800&display=swap');
+
+    :root {
+      --accent-color: #ff6600;
+      --accent-rgb: 255, 102, 0;
+      --bg-main: #050507;
+      --surface-card: #0d0d12;
+      --surface-elevated: #16161f;
+      --border-color: rgba(63, 63, 70, 0.4);
+      --border-color-strong: rgba(255, 255, 255, 0.16);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-subtle: #71717a;
+      
+      /* Typography Variables */
+      --font-interface: 'Plus Jakarta Sans', sans-serif;
+      --font-export: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    html.theme-light {
+      --bg-main: #f8fafc;
+      --surface-card: #ffffff;
+      --surface-elevated: #f1f5f9;
+      --border-color: rgba(203, 213, 225, 0.8);
+      --border-color-strong: rgba(0, 0, 0, 0.16);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+    }
+
+    body {
+      font-family: var(--font-interface);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .accent-color { color: var(--accent-color) !important; }
+    .accent-bg { background-color: var(--accent-color) !important; color: #000000 !important; }
+    .accent-border { border-color: var(--accent-color) !important; }
+    .accent-badge {
+      background-color: rgba(var(--accent-rgb), 0.12);
+      color: var(--accent-color);
+      border: 1px solid rgba(var(--accent-rgb), 0.35);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(120, 120, 120, 0.3);
+      border-radius: 3px;
+    }
+
+    /* Formatted Printable Output typography class */
+    #printableDocArea {
+      font-family: var(--font-export) !important;
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableDocArea, #printableDocArea * {
+        visibility: visible;
+      }
+      #printableDocArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: var(--font-export) !important;
+      }
+    }
+  </style>
+</head>
+<body id="appBody" class="h-full flex flex-col antialiased selection:bg-[#ff6600] selection:text-black">
+
+  <!-- STANDALONE KIOSK ROUTE (Auto-booted via QR hash: #view=stage or #view=foh) -->
+  <div id="standaloneKioskOverlay" class="hidden fixed inset-0 z-50 bg-black text-white p-6 flex flex-col justify-between overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-zinc-800 pb-4">
+      <div class="flex items-center gap-3">
+        <span class="h-3.5 w-3.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div>
+          <h1 id="kioskHeaderTitle" class="font-extrabold text-lg tracking-wider uppercase">STAGE KIOSK DISPLAY</h1>
+          <p id="kioskHeaderSubtitle" class="text-xs font-mono-code text-zinc-400">RIZER SHOW CONTROL</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleElementFullscreen(document.getElementById('standaloneKioskOverlay'))" class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-bold transition-all">
+          <i data-lucide="maximize" class="w-3.5 h-3.5 inline mr-1"></i> Fullscreen
+        </button>
+        <button onclick="exitStandaloneKiosk()" class="px-3 py-1.5 bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white rounded-lg text-xs font-bold transition-all">
+          Exit Kiosk
+        </button>
+      </div>
+    </div>
+
+    <!-- STAGE BOOTH VIEW -->
+    <div id="kioskStageBoothContainer" class="my-auto space-y-6 max-w-4xl mx-auto w-full py-4">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center space-y-2">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-emerald-400">NOW PLAYING</span>
+        <h2 id="kioskStageArtist" class="text-4xl sm:text-6xl font-black truncate">NO ACT PLAYING</h2>
+        <div id="kioskStageCountdown" class="text-6xl sm:text-8xl font-mono-code font-black text-[#00ff66]">00:00:00</div>
+        <p id="kioskStageTimeslot" class="text-sm font-mono-code text-zinc-400">Set: --:-- - --:--</p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">DJ Booth Urgent Cues (To FOH)</span>
+          <span id="kioskCueStatus" class="text-xs font-mono-code text-zinc-400">Status: Ready</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="kioskHotCueGrid"></div>
+      </div>
+    </div>
+
+    <!-- FOH TIMER VIEW -->
+    <div id="kioskFOHTimerContainer" class="hidden my-auto space-y-6 max-w-4xl mx-auto w-full py-4 text-center">
+      <div id="kioskFOHAlertBanner" class="hidden bg-amber-500/20 border-2 border-amber-500 rounded-2xl p-4 flex items-center justify-between text-left">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">INCOMING STAGE CUE</span>
+          <h3 id="kioskFOHAlertText" class="text-xl font-black text-amber-200">MORE STROBE</h3>
+        </div>
+        <button onclick="acknowledgeActiveCue()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-sm rounded-xl transition-all shadow-lg">
+          ACKNOWLEDGE CUE
+        </button>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 space-y-3">
+        <span class="text-xs font-extrabold uppercase tracking-widest text-[#00ff66]">FOH TIMING DISPLAY</span>
+        <h2 id="kioskFOHArtist" class="text-4xl sm:text-7xl font-black truncate">NO ACT PLAYING</h2>
+        <div id="kioskFOHCountdown" class="text-7xl sm:text-9xl font-mono-code font-black text-[#00ff66]">00:00:00</div>
+        <p id="kioskFOHTimeslot" class="text-base font-mono-code text-zinc-400">Set: --:-- - --:--</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 text-left">
+        <div class="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">UP NEXT</span>
+          <h3 id="kioskFOHNext" class="text-lg font-bold">None Scheduled</h3>
+        </div>
+        <div class="bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 text-right">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">SYSTEM TIME</span>
+          <h3 id="kioskFOHClock" class="text-lg font-mono-code font-bold text-[#00ff66]">00:00:00</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center text-[10px] font-mono-code text-zinc-600 pt-3 border-t border-zinc-900">
+      RIZER SHOW CONTROL • KIOSK MODE ACTIVE
+    </div>
+  </div>
+
+  <!-- MAIN APP WRAPPER -->
+  <div id="mainAppLayout" class="flex-1 flex flex-col">
+    <!-- TOP NAVIGATION HEADER -->
+    <header class="border-b border-zinc-800/80 bg-[#09090d]/90 backdrop-blur sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-5">
+          <div class="flex items-center gap-3">
+            <div id="brandIconBg" class="h-10 w-10 rounded-xl accent-bg flex items-center justify-center font-bold text-black shadow-lg">
+              <i data-lucide="layers" class="w-6 h-6 text-black"></i>
+            </div>
+            <div>
+              <h1 class="font-extrabold text-xl tracking-wider text-white">RIZER</h1>
+              <p class="text-xs text-zinc-400">Festival Riser & Show Logistics</p>
+            </div>
+          </div>
+
+          <!-- PRIMARY TABS: RISERS, SHOW, SETTINGS -->
+          <nav aria-label="Main Navigation" class="flex items-center bg-zinc-900 border border-zinc-800 p-1 rounded-xl gap-1">
+            <button onclick="switchAppView('risers')" id="tabBtnRisers" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all accent-bg text-black shadow-sm">
+              <i data-lucide="layers" class="w-3.5 h-3.5 inline mr-1"></i> RISERS
+            </button>
+            <button onclick="switchAppView('show')" id="tabBtnShow" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-zinc-400 hover:text-white">
+              <i data-lucide="play-circle" class="w-3.5 h-3.5 inline mr-1"></i> SHOW
+            </button>
+            <button onclick="switchAppView('settings')" id="tabBtnSettings" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-zinc-400 hover:text-white">
+              <i data-lucide="settings" class="w-3.5 h-3.5 inline mr-1"></i> SETTINGS
+            </button>
+          </nav>
+        </div>
+
+        <!-- Festival Selector & Header Actions -->
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl">
+            <i data-lucide="calendar" class="w-4 h-4 accent-color"></i>
+            <div class="flex flex-col">
+              <span class="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">Festival</span>
+              <select id="headerFestivalSelector" onchange="switchFestival(this.value)" class="bg-transparent text-xs font-bold text-white focus:outline-none cursor-pointer">
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <button onclick="manualSaveAll()" class="px-4 py-1.5 accent-bg text-black font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-1.5">
+            <i data-lucide="save" class="w-3.5 h-3.5"></i>
+            <span id="saveBtnText">Save</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+      <!-- STAGE NAVIGATION TABS BAR -->
+      <div id="stageNavigationBar" class="bg-[#09090d] border border-zinc-800/80 rounded-2xl p-2.5 flex items-center justify-between gap-4 overflow-x-auto custom-scrollbar">
+        <div class="flex items-center gap-2" id="stageTabsContainer">
+          <!-- Dynamically populated stages -->
+        </div>
+
+        <button onclick="createNewStagePrompt()" class="px-3 py-1.5 accent-badge rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Stage
+        </button>
+      </div>
+
+      <!-- TAB 1: RISERS LOGISTICS VIEW -->
+      <div id="viewRisers" class="space-y-6">
+        
+        <!-- STEP 1: ADD PERFORMANCE & BATCH ROW -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Performance Input Form -->
+          <div class="lg:col-span-8 bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800/60 pb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5 accent-color"></i>
+                <h2 class="font-bold text-lg text-white">Add Performance</h2>
+              </div>
+              <span class="text-xs text-zinc-400">Step 1 • Lineup entry</span>
+            </div>
+
+            <form id="artistForm" onsubmit="handleAddArtist(event)" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                <div class="sm:col-span-6">
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Artist / Act Name</label>
+                  <input type="text" id="artistName" required placeholder="e.g. Sub Focus" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-[#ff6600]">
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Start Time</label>
+                  <input type="time" id="startTime" required value="20:00" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-2 text-sm text-white font-mono-code focus:outline-none [color-scheme:dark]">
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Duration (Mins)</label>
+                  <input type="number" id="duration" required min="15" step="5" value="60" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3.5 py-2 text-sm text-white font-mono-code focus:outline-none">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Mixer</label>
+                  <select id="mixerSelect" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="Pioneer DJM-A9">Pioneer DJM-A9</option>
+                    <option value="Pioneer DJM-V10">Pioneer DJM-V10</option>
+                    <option value="Allen & Heath Xone:96">Allen & Heath Xone:96</option>
+                    <option value="Pioneer DJM-900NXS2">Pioneer DJM-900NXS2</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Media Players (Decks)</label>
+                  <select id="playersSelect" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="4x Pioneer CDJ-3000">4x Pioneer CDJ-3000</option>
+                    <option value="3x Pioneer CDJ-3000">3x Pioneer CDJ-3000</option>
+                    <option value="2x Pioneer CDJ-3000">2x Pioneer CDJ-3000</option>
+                    <option value="2x Technics SL1200 Turntables">2x Technics SL1200 Turntables</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">FX & Extras</label>
+                  <select id="effectsSelect" class="w-full bg-zinc-900 border border-zinc-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="None">None</option>
+                    <option value="1x Pioneer RMX-1000">1x Pioneer RMX-1000</option>
+                    <option value="1x Boss DD-7 Delay">1x Boss DD-7 Delay</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-zinc-800/60">
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="keepSolo" class="accent-color">
+                  <span class="text-xs font-bold text-white">Keep Solo Riser (Dedicated)</span>
+                </label>
+                <button type="submit" class="px-5 py-2 accent-bg text-black font-bold text-sm rounded-xl transition-all shadow-md">
+                  Add to Lineup
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Batch Generator -->
+          <div class="lg:col-span-4 flex flex-col justify-between space-y-4">
+            <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-5 shadow-xl space-y-3">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <i data-lucide="sparkles" class="w-4 h-4 accent-color"></i> Batch Template Slots
+              </h3>
+              <p class="text-xs text-zinc-400">Generate multiple sequenced performance slots:</p>
+              <div class="flex items-center gap-2">
+                <input type="number" id="batchCountInput" min="1" max="16" value="6" class="w-20 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-sm font-mono-code text-center text-white">
+                <button onclick="generateBatchSlots()" class="flex-1 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs rounded-xl border border-zinc-700 transition-all">
+                  Generate Slots
+                </button>
+              </div>
+              <p class="text-[11px] text-zinc-500">Auto-increments start times sequentially from 12:00 PM.</p>
+            </div>
+
+            <div class="p-4 rounded-2xl border border-zinc-800 bg-zinc-950/60 text-xs text-zinc-400">
+              <span class="font-bold text-white block mb-1">Production Flow:</span>
+              1. Add acts & schedules &rarr; 2. Review roster &rarr; 3. Build Risers &rarr; 4. Fine-tune gear orders.
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: STAGE ROSTER TABLE WITH EXPORT SCHEDULE HEADING -->
+        <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+            <div>
+              <h3 class="font-bold text-base text-white flex items-center gap-2">
+                <i data-lucide="list-music" class="w-5 h-5 accent-color"></i> Current Stage Roster
+              </h3>
+              <p class="text-xs text-zinc-400">Review scheduled acts before generating physical risers</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <span id="actCountBadge" class="px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono-code accent-color font-bold">0 Acts</span>
+              
+              <!-- HEADING & ACTION: EXPORT SCHEDULE -->
+              <button onclick="openFormattedScheduleModal()" class="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 accent-color"></i> Export Schedule
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-900/50">
+                  <th class="py-2.5 px-3">Artist</th>
+                  <th class="py-2.5 px-3">Start</th>
+                  <th class="py-2.5 px-3">End</th>
+                  <th class="py-2.5 px-3">Duration</th>
+                  <th class="py-2.5 px-3">Mixer</th>
+                  <th class="py-2.5 px-3">Decks</th>
+                  <th class="py-2.5 px-3">FX / Extras</th>
+                  <th class="py-2.5 px-3 text-center">Solo</th>
+                  <th class="py-2.5 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="rosterTableBody" class="divide-y divide-zinc-800/60">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- STEP 3: "BUILD RISERS" TRIGGER BUTTON BELOW ROSTER -->
+        <div class="bg-gradient-to-r from-zinc-900 via-[#0d0d12] to-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl text-center space-y-2">
+          <button onclick="calculateRisers()" class="w-full max-w-md mx-auto py-3.5 accent-bg text-black font-black text-sm rounded-xl transition-all shadow-lg hover:brightness-110 flex items-center justify-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5"></i> Build Risers
+          </button>
+          <p class="text-xs text-zinc-400">Processes schedule and minimizes physical rolling riser changeovers</p>
+        </div>
+
+        <!-- STEP 4: ROLLING RISERS ALLOCATION SECTION WITH REORDERABLE IDENTIFIERS -->
+        <div id="resultsSection" class="hidden space-y-6">
+          <div class="flex items-center justify-between border-t border-zinc-800 pt-6">
+            <div>
+              <h2 class="font-black text-xl text-white">ALLOCATED ROLLING RISERS</h2>
+              <p class="text-xs text-zinc-400">Reorder riser letters below. Riser letters swap automatically to prevent duplicate identifiers.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportRiserScheduleCSV()" class="px-3.5 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white rounded-xl text-xs font-bold flex items-center gap-2">
+                <i data-lucide="download" class="w-3.5 h-3.5 accent-color"></i> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <div id="risersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Dynamic riser cards inserted here -->
+          </div>
+
+          <!-- STEP 5: CONSOLIDATED SUPPLIER EQUIPMENT ORDER -->
+          <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-6 shadow-xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+              <div>
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                  <i data-lucide="truck" class="w-5 h-5 accent-color"></i> Consolidated Supplier Equipment Order
+                </h3>
+                <p class="text-xs text-zinc-400">Stage legs strictly specified as mm/ft with zero brackets</p>
+              </div>
+
+              <!-- Package attacher dropdown -->
+              <div class="flex items-center gap-2">
+                <select id="stagePackagePicker" class="bg-zinc-900 border border-zinc-700 text-xs text-white rounded-xl px-3 py-2 font-bold focus:outline-none">
+                  <!-- Dynamic Packages from Settings -->
+                </select>
+                <button onclick="attachPackageToStage()" class="px-3 py-2 accent-bg text-black text-xs font-bold rounded-xl whitespace-nowrap">
+                  Add Package
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-900/50">
+                    <th class="py-2.5 px-3">Equipment Description</th>
+                    <th class="py-2.5 px-3 text-center">Base Qty</th>
+                    <th class="py-2.5 px-3 text-center">Spares Adjust</th>
+                    <th class="py-2.5 px-3 text-right">Total Supplier Qty</th>
+                  </tr>
+                </thead>
+                <tbody id="gearTableBody" class="divide-y divide-zinc-800/60">
+                  <!-- Dynamic Gear Summary -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- EXPORT SUPPLIER LIST BUTTON AT VERY BOTTOM -->
+            <div class="pt-4 border-t border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <span class="text-xs text-zinc-400">Order finalized for dispatch and warehouse prep.</span>
+              <button onclick="exportSupplierGearCSV()" class="px-5 py-2.5 accent-bg text-black font-extrabold text-xs rounded-xl shadow-lg flex items-center gap-2 self-end">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i> Export Supplier Equipment List (.CSV)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: SHOW MODE & REALTIME COUNTDOWN VIEW -->
+      <div id="viewShow" class="hidden space-y-6">
+        <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              LIVE SHOW RUNNER
+            </span>
+            <h2 id="showBannerStageTitle" class="text-2xl font-black text-white mt-1">Stage 1 Control</h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="openStandaloneKioskWindow('stage')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i data-lucide="tablet" class="w-4 h-4 text-emerald-400"></i> Open Stage View (iPad)
+            </button>
+            <button onclick="openStandaloneKioskWindow('foh')" class="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i data-lucide="monitor" class="w-4 h-4 text-emerald-400"></i> Open FOH Timer Display
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 SEPARATE QR CODES SECTION (STAGE & FOH) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="tablet" class="w-5 h-5 text-emerald-400"></i>
+                <h3 class="font-bold text-base text-white">Stage View QR (DJ Booth iPad)</h3>
+              </div>
+              <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-zinc-900 text-zinc-400">#view=stage</span>
+            </div>
+
+            <p class="text-xs text-zinc-400">
+              Scan with an iPad positioned in the DJ booth for live countdowns and Hot Cue request buttons.
+            </p>
+
+            <div class="bg-white p-4 rounded-xl w-[170px] h-[170px] mx-auto flex items-center justify-center shadow-md">
+              <div id="stageViewQRCode"></div>
+            </div>
+
+            <div class="pt-2">
+              <button onclick="copyKioskLink('stage')" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-bold border border-zinc-800 flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Stage View URL
+              </button>
+              <span id="copyStageFeedback" class="text-[10px] text-emerald-400 font-mono-code block text-center mt-1 h-3"></span>
+            </div>
+          </div>
+
+          <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div class="flex items-center gap-2">
+                <i data-lucide="monitor" class="w-5 h-5 text-emerald-400"></i>
+                <h3 class="font-bold text-base text-white">FOH Timer Display QR</h3>
+              </div>
+              <span class="text-[10px] font-mono-code px-2 py-0.5 rounded bg-zinc-900 text-zinc-400">#view=foh</span>
+            </div>
+
+            <p class="text-xs text-zinc-400">
+              Open on secondary monitors at front-of-house for the master countdown and incoming booth cue alerts.
+            </p>
+
+            <div class="bg-white p-4 rounded-xl w-[170px] h-[170px] mx-auto flex items-center justify-center shadow-md">
+              <div id="fohViewQRCode"></div>
+            </div>
+
+            <div class="pt-2">
+              <button onclick="copyKioskLink('foh')" class="w-full py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white rounded-xl text-xs font-bold border border-zinc-800 flex items-center justify-center gap-1.5 transition-all">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy FOH Timer URL
+              </button>
+              <span id="copyFOHFeedback" class="text-[10px] text-emerald-400 font-mono-code block text-center mt-1 h-3"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Show Runsheet Timeline -->
+        <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <h3 class="font-bold text-base text-white flex items-center gap-2">
+              <i data-lucide="clock" class="w-5 h-5 text-emerald-400"></i> Stage Runsheet Timeline
+            </h3>
+            <span id="showRosterActCount" class="text-xs font-mono-code text-zinc-400">0 Acts</span>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400 bg-zinc-900/50">
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3">Artist</th>
+                  <th class="py-2.5 px-3">Start Time</th>
+                  <th class="py-2.5 px-3">End Time</th>
+                  <th class="py-2.5 px-3">Duration</th>
+                  <th class="py-2.5 px-3">Mixer</th>
+                  <th class="py-2.5 px-3">Players</th>
+                </tr>
+              </thead>
+              <tbody id="showTimelineBody" class="divide-y divide-zinc-800/60">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SETTINGS (iOS-STYLE TWO-PANE VIEW) -->
+      <div id="viewSettings" class="hidden">
+        <div class="bg-[#0d0d12] border border-zinc-800/80 rounded-2xl shadow-xl overflow-hidden min-h-[620px] grid grid-cols-1 md:grid-cols-12">
+          
+          <!-- LEFT PANE: 4 CATEGORIES -->
+          <aside class="md:col-span-4 border-r border-zinc-800 bg-[#09090d] p-3 space-y-1">
+            <div class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Settings</div>
+            
+            <button onclick="selectSettingsCategory('general')" id="setNav_general" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all accent-bg text-black">
+              <i data-lucide="sliders" class="w-4 h-4"></i> General
+            </button>
+            <button onclick="selectSettingsCategory('appearance')" id="setNav_appearance" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all text-zinc-400 hover:text-white hover:bg-zinc-900">
+              <i data-lucide="palette" class="w-4 h-4"></i> Appearance & Fonts
+            </button>
+            <button onclick="selectSettingsCategory('equipment')" id="setNav_equipment" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all text-zinc-400 hover:text-white hover:bg-zinc-900">
+              <i data-lucide="package" class="w-4 h-4"></i> Equipment
+            </button>
+            <button onclick="selectSettingsCategory('network')" id="setNav_network" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all text-zinc-400 hover:text-white hover:bg-zinc-900">
+              <i data-lucide="wifi" class="w-4 h-4"></i> Network & OSC
+            </button>
+          </aside>
+
+          <!-- RIGHT PANE: DETAIL VIEW -->
+          <div class="md:col-span-8 p-6 overflow-y-auto max-h-[750px] custom-scrollbar">
+
+            <!-- 1. GENERAL -->
+            <div id="setPanel_general" class="space-y-6">
+              <div class="border-b border-zinc-800 pb-3">
+                <h3 class="text-lg font-bold text-white">General Settings</h3>
+                <p class="text-xs text-zinc-400">Configure event name, event date, stages, and stage nicknames</p>
+              </div>
+
+              <div class="space-y-4 max-w-lg">
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Event / Festival Name</label>
+                  <input type="text" id="settingsFestName" onchange="updateFestivalMetadataFromSettings()" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Event Date</label>
+                  <input type="date" id="settingsFestDate" onchange="updateFestivalMetadataFromSettings()" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white font-mono-code focus:outline-none [color-scheme:dark]">
+                </div>
+
+                <div class="pt-2 border-t border-zinc-800">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3">Stages & Stage Nicknames</h4>
+                  <div id="settingsStageList" class="space-y-2">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-1">Default Megadeck Leg Height</label>
+                  <select id="settingsStageLegSelect" onchange="updateStageLegsFromSettings(this.value)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none">
+                    <option value="300mm/1ft">300mm/1ft</option>
+                    <option value="400mm/16in">400mm/16in</option>
+                    <option value="600mm/2ft">600mm/2ft</option>
+                    <option value="900mm/3ft">900mm/3ft</option>
+                    <option value="1200mm/4ft">1200mm/4ft</option>
+                  </select>
+                  <span class="text-[11px] text-zinc-500 mt-1 block">Specified strictly as mm/ft with zero brackets.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. APPEARANCE & TYPOGRAPHY -->
+            <div id="setPanel_appearance" class="hidden space-y-6">
+              <div class="border-b border-zinc-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Appearance & Typography</h3>
+                <p class="text-xs text-zinc-400">Customize UI theme mode, accent colors, interface typography, and export document fonts</p>
+              </div>
+
+              <div class="space-y-6 max-w-xl">
+                <!-- Theme Mode -->
+                <div>
+                  <label class="block text-xs font-semibold text-zinc-400 mb-2">Display Theme</label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setAppThemeMode('system')" id="themeBtn_system" class="py-2.5 rounded-xl text-xs font-bold border border-zinc-700 bg-zinc-900 text-white">System</button>
+                    <button onclick="setAppThemeMode('dark')" id="themeBtn_dark" class="py-2.5 rounded-xl text-xs font-bold border border-zinc-700 bg-zinc-900 text-white">Dark</button>
+                    <button onclick="setAppThemeMode('light')" id="themeBtn_light" class="py-2.5 rounded-xl text-xs font-bold border border-zinc-700 bg-zinc-900 text-white">Light</button>
+                  </div>
+                </div>
+
+                <!-- Custom Accent Color Spectrum -->
+                <div class="pt-3 border-t border-zinc-800 space-y-3">
+                  <label class="block text-xs font-semibold text-zinc-400">Custom Accent Color (Full Spectrum)</label>
+                  <div class="flex items-center gap-3">
+                    <input type="color" id="customColorPicker" onchange="setAppAccentColor(this.value)" class="w-12 h-12 rounded-xl cursor-pointer bg-transparent border-0 p-0">
+                    <div>
+                      <input type="text" id="customColorHex" onchange="setAppAccentColor(this.value)" placeholder="#ff6600" class="w-28 bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2 text-xs font-mono-code text-white uppercase focus:outline-none">
+                      <span class="text-[10px] text-zinc-500 block mt-0.5">Hex or Color Picker</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TYPOGRAPHY CONTROLS -->
+                <div class="pt-4 border-t border-zinc-800 space-y-5">
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Typography Settings</h4>
+
+                  <!-- Interface Typography (UI Font) -->
+                  <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Interface Typography (UI Font)</label>
+                    <select id="interfaceFontSelect" onchange="handleInterfaceFontChange(this.value)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none">
+                      <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern Clean Sans - Default)</option>
+                      <option value="'Inter', sans-serif">Inter (High-legibility Interface Sans)</option>
+                      <option value="'Roboto', sans-serif">Roboto (Neo-grotesque Sans)</option>
+                      <option value="'Space Grotesk', sans-serif">Space Grotesk (Tech Geometric Display)</option>
+                      <option value="'Syne', sans-serif">Syne (Heavy Festival Aesthetic)</option>
+                      <option value="'JetBrains Mono', monospace">JetBrains Mono (Console / Technical Monospace)</option>
+                      <option value="system-ui, -apple-system, sans-serif">System Native Sans</option>
+                    </select>
+                    <span class="text-[11px] text-zinc-500 block mt-1">Controls the typography across all buttons, headings, tables, and tabs.</span>
+                  </div>
+
+                  <!-- Document & Export Typography (Print / Export Font) -->
+                  <div>
+                    <label class="block text-xs font-semibold text-zinc-300 mb-1">Document & Export Typography (Print / Schedule Font)</label>
+                    <select id="exportFontSelect" onchange="handleExportFontChange(this.value)" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none">
+                      <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans (Modern Clean)</option>
+                      <option value="'Inter', sans-serif">Inter (Clean Corporate Sans)</option>
+                      <option value="'Courier Prime', Courier, monospace">Courier Prime (Production Typewriter / Script)</option>
+                      <option value="'Newsreader', Georgia, serif">Newsreader / Georgia (Editorial Production Serif)</option>
+                      <option value="'JetBrains Mono', monospace">JetBrains Mono (Technical Tech Monospace)</option>
+                      <option value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica / Universal Sans</option>
+                    </select>
+                    <span class="text-[11px] text-zinc-500 block mt-1">Controls the typography of the printable formatted run-sheet modal and PDF outputs.</span>
+                  </div>
+
+                  <!-- LIVE FONT PREVIEW CARD -->
+                  <div class="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block">Live Typography Comparison Preview</span>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <!-- UI Font Sample -->
+                      <div class="p-3 bg-zinc-900/90 border border-zinc-800 rounded-xl space-y-1.5">
+                        <span class="text-[10px] font-bold accent-color uppercase block">UI Preview</span>
+                        <div id="uiFontSampleBox" class="text-sm font-bold text-white">
+                          RIZER Stage Control 2026
+                        </div>
+                        <p class="text-xs text-zinc-400">Riser A • 20:00 - 21:00 • CDJ-3000</p>
+                      </div>
+
+                      <!-- Export Font Sample -->
+                      <div class="p-3 bg-white text-black border border-zinc-300 rounded-xl space-y-1.5 shadow-sm">
+                        <span class="text-[10px] font-bold text-zinc-600 uppercase block font-sans">Document Export Preview</span>
+                        <div id="exportFontSampleBox" class="text-sm font-bold text-black">
+                          SUMMER FESTIVAL RUNSHEET
+                        </div>
+                        <p class="text-xs text-zinc-700">Official Stage Schedule Document</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. EQUIPMENT (2 COLUMNS: INDIVIDUAL & PACKAGES WITH DRAG AND DROP) -->
+            <div id="setPanel_equipment" class="hidden space-y-5">
+              <div class="border-b border-zinc-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Equipment Builder</h3>
+                <p class="text-xs text-zinc-400">Drag individual items into packages to assemble kits</p>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Column 1: Individual Equipment -->
+                <div class="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4 space-y-3">
+                  <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <span class="text-xs font-bold text-white">Individual Equipment Items</span>
+                    <button onclick="promptNewIndividualItem()" class="text-[10px] px-2 py-0.5 accent-badge rounded font-bold">+ New Item</button>
+                  </div>
+
+                  <div id="individualEquipmentList" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Column 2: Packages -->
+                <div class="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4 space-y-3">
+                  <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <span class="text-xs font-bold text-white">Equipment Packages</span>
+                    <button onclick="promptCreateNewPackage()" class="text-[10px] px-2.5 py-1 accent-bg text-black rounded font-bold">+ Add New Package</button>
+                  </div>
+
+                  <div id="equipmentPackagesList" class="space-y-3 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                    <!-- Dynamic packages with drop targets -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. NETWORK & OSC -->
+            <div id="setPanel_network" class="hidden space-y-6">
+              <div class="border-b border-zinc-800 pb-3">
+                <h3 class="text-lg font-bold text-white">Network & OSC Configuration</h3>
+                <p class="text-xs text-zinc-400">Configure network adapters, view stage QR links, and set up OSC messaging</p>
+              </div>
+
+              <div class="space-y-3 max-w-lg">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Available Network Adapters</h4>
+                <select id="networkAdapterSelect" class="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none">
+                  <option value="en0">Wi-Fi (en0) - 192.168.1.145</option>
+                  <option value="eth0">Ethernet Dante/ArtNet (eth0) - 10.0.0.50</option>
+                  <option value="lo0">Localhost Loopback (127.0.0.1)</option>
+                </select>
+              </div>
+
+              <!-- OSC Sub Menu -->
+              <div class="bg-zinc-950/70 border border-zinc-800 rounded-xl p-4 space-y-4">
+                <div class="border-b border-zinc-800 pb-2">
+                  <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider">OSC Output Transmitter</span>
+                  <p class="text-[11px] text-zinc-400">Select which adapter and port is OSC sending on</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Destination IP</label>
+                    <input type="text" id="oscTargetIP" value="192.168.1.255" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-semibold text-zinc-400 mb-1">Destination Port</label>
+                    <input type="number" id="oscTargetPort" value="8000" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono-code">
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <span class="text-[11px] font-bold text-zinc-300 block">Default OSC Messages</span>
+                  <div class="space-y-1.5 text-xs font-mono-code" id="oscMessageList">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- PRINTABLE / FORMATTED SCHEDULE MODAL -->
+  <div id="formattedScheduleModal" class="fixed inset-0 z-50 bg-black/80 hidden flex items-center justify-center p-4">
+    <div class="bg-zinc-900 border border-zinc-700 rounded-2xl max-w-3xl w-full p-6 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="file-text" class="w-4 h-4 accent-color"></i> Formatted Stage Schedule Document
+        </h3>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="px-3 py-1.5 accent-bg text-black font-bold text-xs rounded-xl flex items-center gap-1.5">
+            <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print / Save PDF
+          </button>
+          <button onclick="closeFormattedScheduleModal()" class="text-zinc-400 hover:text-white p-1">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Document Container (Styled dynamically by --font-export) -->
+      <div id="printableDocArea" class="flex-1 overflow-y-auto bg-white text-black p-8 rounded-xl shadow-inner">
+        <div class="border-b-2 border-black pb-4 mb-6 flex justify-between items-end">
+          <div>
+            <h1 id="docEventTitle" class="text-3xl font-black uppercase tracking-tight">SUMMER FESTIVAL 2026</h1>
+            <h2 id="docStageTitle" class="text-xl font-bold text-zinc-700 mt-1">STAGE 1: MAINSTAGE</h2>
+          </div>
+          <div class="text-right">
+            <span class="text-xs uppercase font-bold text-zinc-500 block">Production Date</span>
+            <span id="docEventDate" class="text-sm font-mono font-bold">2026-10-15</span>
+          </div>
+        </div>
+
+        <table class="w-full text-left border-collapse text-xs border border-zinc-300">
+          <thead>
+            <tr class="bg-zinc-100 border-b border-zinc-400 text-zinc-800 uppercase tracking-wider text-[10px]">
+              <th class="p-2.5 border-r border-zinc-300">Start</th>
+              <th class="p-2.5 border-r border-zinc-300">End</th>
+              <th class="p-2.5 border-r border-zinc-300">Artist / Act</th>
+              <th class="p-2.5 border-r border-zinc-300">Duration</th>
+              <th class="p-2.5 border-r border-zinc-300">Mixer</th>
+              <th class="p-2.5 border-r border-zinc-300">Decks</th>
+              <th class="p-2.5">FX / Extras</th>
+            </tr>
+          </thead>
+          <tbody id="docScheduleTableBody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+
+        <div class="mt-8 pt-4 border-t border-zinc-300 flex justify-between text-[10px] text-zinc-500 font-mono">
+          <span>RIZER FESTIVAL ENGINE</span>
+          <span>OFFICIAL STAGE RUNSHEET</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // APPLICATION DATA MODEL
+    let festivalDB = {};
+    let activeFestId = null;
+    let activeStageId = null;
+    let currentAppView = 'risers';
+    let broadcastChannel = null;
+
+    const ALPHABET_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    // OSC Preset Commands
+    const DEFAULT_OSC_MESSAGES = [
+      { label: "Trigger Strobe Burst", path: "/cue/strobe/flash", val: "1.0" },
+      { label: "Trigger Stage Haze", path: "/cue/haze/burst", val: "255" },
+      { label: "Timer Reset", path: "/timer/reset", val: "1" },
+      { label: "Timer Pause/Play", path: "/timer/toggle", val: "1" }
+    ];
+
+    // Library of Individual Equipment Items
+    let individualEquipmentLibrary = [
+      { id: 'eq_1', name: 'Stage Fan 240V', category: 'Stage FX' },
+      { id: 'eq_2', name: 'Gaffer Tape Roll (Black)', category: 'Hardware' },
+      { id: 'eq_3', name: 'Clip-on Work Light', category: 'Lighting' },
+      { id: 'eq_4', name: 'Heavy Duty Laptop Stand', category: 'DJ Hardware' },
+      { id: 'eq_5', name: 'Pioneer RMX-1000 Rig', category: 'Audio FX' },
+      { id: 'eq_6', name: 'Wireless Comms Beltpack', category: 'Comms' }
+    ];
+
+    // Equipment Packages
+    let equipmentPackages = [
+      {
+        id: 'pkg_1',
+        name: 'Stage Manager Kit',
+        category: 'Stage Management',
+        items: [
+          { name: 'Stage Fan 240V', qty: 2 },
+          { name: 'Gaffer Tape Roll (Black)', qty: 3 }
+        ]
+      },
+      {
+        id: 'pkg_2',
+        name: 'DJ Performance Extras',
+        category: 'Audio',
+        items: [
+          { name: 'Heavy Duty Laptop Stand', qty: 2 },
+          { name: 'Pioneer RMX-1000 Rig', qty: 1 }
+        ]
+      }
+    ];
+
+    // INITIALIZATION
+    window.addEventListener('DOMContentLoaded', () => {
+      initBroadcast();
+      if (checkRouteHashForKiosk()) return;
+
+      loadStorage();
+      loadTypographyPreferences();
+      renderAll();
+      lucide.createIcons();
+    });
+
+    function initBroadcast() {
+      if ('BroadcastChannel' in window) {
+        broadcastChannel = new BroadcastChannel('RIZER_SHOW_CHANNEL');
+        broadcastChannel.onmessage = (e) => {
+          const d = e.data;
+          if (!d) return;
+          if (d.type === 'HOT_CUE') {
+            const banner = document.getElementById('kioskFOHAlertBanner');
+            const txt = document.getElementById('kioskFOHAlertText');
+            if (banner && txt) {
+              txt.innerText = d.cue;
+              banner.classList.remove('hidden');
+            }
+          } else if (d.type === 'ACK') {
+            const st = document.getElementById('kioskCueStatus');
+            if (st) {
+              st.innerText = "Status: ACKNOWLEDGED BY FOH ✓";
+              st.className = "text-xs font-mono-code text-emerald-400";
+              setTimeout(() => {
+                st.innerText = "Status: Ready";
+                st.className = "text-xs font-mono-code text-zinc-400";
+              }, 4000);
+            }
+          }
+        };
+      }
+    }
+
+    function checkRouteHashForKiosk() {
+      const hash = window.location.hash;
+      if (hash.includes('#view=')) {
+        const mode = hash.includes('foh') ? 'foh' : 'stage';
+        document.getElementById('mainAppLayout').classList.add('hidden');
+        document.getElementById('standaloneKioskOverlay').classList.remove('hidden');
+
+        if (mode === 'foh') {
+          document.getElementById('kioskStageBoothContainer').classList.add('hidden');
+          document.getElementById('kioskFOHTimerContainer').classList.remove('hidden');
+          document.getElementById('kioskHeaderTitle').innerText = 'FOH TIMER DISPLAY';
+        } else {
+          document.getElementById('kioskStageBoothContainer').classList.remove('hidden');
+          document.getElementById('kioskFOHTimerContainer').classList.add('hidden');
+          document.getElementById('kioskHeaderTitle').innerText = 'STAGE BOOTH IPAD';
+          renderKioskHotCueButtons();
+        }
+
+        loadStorage();
+        startKioskTimer(mode);
+        lucide.createIcons();
+        return true;
+      }
+      return false;
+    }
+
+    function renderKioskHotCueButtons() {
+      const cues = ["More Strobe", "More Smoke / Haze", "Lower Booth Vol", "Raise Booth Vol", "Kill CO2", "Audio Tech to Stage"];
+      const grid = document.getElementById('kioskHotCueGrid');
+      grid.innerHTML = cues.map(c => `
+        <button onclick="sendKioskCue('${c}')" class="p-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-xl text-xs font-bold text-zinc-200 hover:text-white">
+          ${c}
+        </button>
+      `).join('');
+    }
+
+    function sendKioskCue(c) {
+      document.getElementById('kioskCueStatus').innerText = `Sent: "${c}" (Waiting for FOH...)`;
+      document.getElementById('kioskCueStatus').className = "text-xs font-mono-code text-amber-400 animate-pulse";
+      if (broadcastChannel) broadcastChannel.postMessage({ type: 'HOT_CUE', cue: c });
+    }
+
+    function acknowledgeActiveCue() {
+      document.getElementById('kioskFOHAlertBanner').classList.add('hidden');
+      if (broadcastChannel) broadcastChannel.postMessage({ type: 'ACK' });
+    }
+
+    function exitStandaloneKiosk() {
+      window.location.hash = '';
+      window.location.reload();
+    }
+
+    function toggleElementFullscreen(el) {
+      if (!document.fullscreenElement) el.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    }
+
+    // PERSISTENCE & STORAGE
+    function loadStorage() {
+      const stored = localStorage.getItem('RIZER_DB_V3');
+      if (stored) {
+        try { festivalDB = JSON.parse(stored); } catch (e) { festivalDB = {}; }
+      }
+
+      if (Object.keys(festivalDB).length === 0) {
+        const fId = 'fest_' + Date.now();
+        const sId = 'stage_1_' + Date.now();
+
+        festivalDB[fId] = {
+          id: fId,
+          name: "Summer Festival 2026",
+          date: new Date().toISOString().split('T')[0],
+          stageCounter: 1,
+          stages: {
+            [sId]: {
+              id: sId,
+              numberLabel: "Stage 1",
+              nickname: "Mainstage",
+              roster: [],
+              allocatedRisers: [],
+              attachedPackages: [],
+              legHeight: "600mm/2ft" // STRICT mm/ft (NO BRACKETS)
+            }
+          }
+        };
+      }
+
+      activeFestId = Object.keys(festivalDB)[0];
+      const sKeys = Object.keys(festivalDB[activeFestId].stages || {});
+      activeStageId = sKeys.length > 0 ? sKeys[0] : null;
+
+      const savedAccent = localStorage.getItem('RIZER_COLOR_ACCENT') || '#ff6600';
+      setAppAccentColor(savedAccent);
+    }
+
+    function saveStorage() {
+      localStorage.setItem('RIZER_DB_V3', JSON.stringify(festivalDB));
+    }
+
+    function manualSaveAll() {
+      saveStorage();
+      const txt = document.getElementById('saveBtnText');
+      txt.innerText = 'Saved!';
+      setTimeout(() => { txt.innerText = 'Save'; }, 1500);
+    }
+
+    function getActiveStage() {
+      const fest = festivalDB[activeFestId];
+      if (fest && fest.stages && activeStageId) return fest.stages[activeStageId];
+      return null;
+    }
+
+    // TYPOGRAPHY MANAGEMENT & PREVIEWS
+    function loadTypographyPreferences() {
+      const savedUIFont = localStorage.getItem('RIZER_FONT_INTERFACE') || "'Plus Jakarta Sans', sans-serif";
+      const savedExportFont = localStorage.getItem('RIZER_FONT_EXPORT') || "'Plus Jakarta Sans', sans-serif";
+
+      applyInterfaceFont(savedUIFont);
+      applyExportFont(savedExportFont);
+
+      const uiSelect = document.getElementById('interfaceFontSelect');
+      const exportSelect = document.getElementById('exportFontSelect');
+      if (uiSelect) uiSelect.value = savedUIFont;
+      if (exportSelect) exportSelect.value = savedExportFont;
+    }
+
+    function handleInterfaceFontChange(fontVal) {
+      applyInterfaceFont(fontVal);
+      localStorage.setItem('RIZER_FONT_INTERFACE', fontVal);
+    }
+
+    function handleExportFontChange(fontVal) {
+      applyExportFont(fontVal);
+      localStorage.setItem('RIZER_FONT_EXPORT', fontVal);
+    }
+
+    function applyInterfaceFont(fontVal) {
+      document.documentElement.style.setProperty('--font-interface', fontVal);
+      document.body.style.fontFamily = fontVal;
+      const sample = document.getElementById('uiFontSampleBox');
+      if (sample) sample.style.fontFamily = fontVal;
+    }
+
+    function applyExportFont(fontVal) {
+      document.documentElement.style.setProperty('--font-export', fontVal);
+      const printDoc = document.getElementById('printableDocArea');
+      if (printDoc) printDoc.style.fontFamily = fontVal;
+      const sample = document.getElementById('exportFontSampleBox');
+      if (sample) sample.style.fontFamily = fontVal;
+    }
+
+    // VIEW ROUTING
+    function switchAppView(view) {
+      currentAppView = view;
+      document.getElementById('viewRisers').classList.toggle('hidden', view !== 'risers');
+      document.getElementById('viewShow').classList.toggle('hidden', view !== 'show');
+      document.getElementById('viewSettings').classList.toggle('hidden', view !== 'settings');
+      document.getElementById('stageNavigationBar').classList.toggle('hidden', view === 'settings');
+
+      ['Risers', 'Show', 'Settings'].forEach(v => {
+        const btn = document.getElementById(`tabBtn${v}`);
+        if (v.toLowerCase() === view) {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all accent-bg text-black shadow-sm";
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-zinc-400 hover:text-white";
+        }
+      });
+
+      if (view === 'show') renderShowView();
+      if (view === 'settings') renderSettingsView();
+      lucide.createIcons();
+    }
+
+    // RENDER MAIN APPLICATION VIEWS
+    function renderAll() {
+      renderFestivalSelectors();
+      renderStageTabs();
+      renderRosterTable();
+      renderPackagesPicker();
+
+      const stage = getActiveStage();
+      if (stage && stage.allocatedRisers && stage.allocatedRisers.length > 0) {
+        renderResults();
+      } else {
+        document.getElementById('resultsSection').classList.add('hidden');
+      }
+    }
+
+    function renderFestivalSelectors() {
+      const sel = document.getElementById('headerFestivalSelector');
+      sel.innerHTML = Object.values(festivalDB).map(f => `
+        <option value="${f.id}" ${f.id === activeFestId ? 'selected' : ''}>${f.name}</option>
+      `).join('');
+    }
+
+    function switchFestival(id) {
+      activeFestId = id;
+      const sKeys = Object.keys(festivalDB[activeFestId].stages || {});
+      activeStageId = sKeys.length > 0 ? sKeys[0] : null;
+      renderAll();
+    }
+
+    function renderStageTabs() {
+      const container = document.getElementById('stageTabsContainer');
+      const fest = festivalDB[activeFestId];
+      if (!fest || !fest.stages) return;
+
+      container.innerHTML = Object.values(fest.stages).map(st => {
+        const label = st.nickname ? `${st.numberLabel}: ${st.nickname}` : st.numberLabel;
+        const isActive = st.id === activeStageId;
+        return `
+          <button onclick="switchStage('${st.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${isActive ? 'accent-bg text-black shadow-sm' : 'bg-zinc-900 text-zinc-400 hover:text-white'}">
+            <i data-lucide="disc" class="w-3.5 h-3.5"></i>
+            <span>${label}</span>
+            <span class="text-[9px] px-1 rounded ${isActive ? 'bg-black/20 text-black' : 'bg-zinc-800 text-zinc-400'}">${st.roster ? st.roster.length : 0}</span>
+          </button>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function switchStage(stageId) {
+      activeStageId = stageId;
+      renderStageTabs();
+      renderRosterTable();
+      renderPackagesPicker();
+
+      const stage = getActiveStage();
+      if (stage && stage.allocatedRisers && stage.allocatedRisers.length > 0) {
+        renderResults();
+      } else {
+        document.getElementById('resultsSection').classList.add('hidden');
+      }
+    }
+
+    function createNewStagePrompt() {
+      const fest = festivalDB[activeFestId];
+      if (!fest) return;
+
+      fest.stageCounter = (fest.stageCounter || Object.keys(fest.stages).length) + 1;
+      const num = fest.stageCounter;
+      const newId = `stage_${num}_` + Date.now();
+
+      fest.stages[newId] = {
+        id: newId,
+        numberLabel: `Stage ${num}`,
+        nickname: "",
+        roster: [],
+        allocatedRisers: [],
+        attachedPackages: [],
+        legHeight: "600mm/2ft" // STRICT mm/ft
+      };
+
+      activeStageId = newId;
+      saveStorage();
+      renderAll();
+    }
+
+    // LINEUP & ROSTER
+    function timeToMinutes(str) {
+      if (!str) return 0;
+      const [h, m] = str.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(mins) {
+      const h = Math.floor((mins % 1440) / 60);
+      const m = mins % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function handleAddArtist(e) {
+      e.preventDefault();
+      const stage = getActiveStage();
+      if (!stage) return;
+
+      const name = document.getElementById('artistName').value.trim();
+      const startTime = document.getElementById('startTime').value;
+      const duration = parseInt(document.getElementById('duration').value);
+      const mixer = document.getElementById('mixerSelect').value;
+      const players = document.getElementById('playersSelect').value;
+      const effects = document.getElementById('effectsSelect').value;
+      const keepSolo = document.getElementById('keepSolo').checked;
+
+      const startMins = timeToMinutes(startTime);
+      const endMins = startMins + duration;
+
+      stage.roster.push({
+        id: 'act_' + Date.now(),
+        name,
+        startTime,
+        duration,
+        endMins,
+        endTime: minutesToTime(endMins),
+        mixer,
+        players,
+        effects,
+        keepSolo
+      });
+
+      stage.roster.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      document.getElementById('artistName').value = '';
+      document.getElementById('keepSolo').checked = false;
+
+      saveStorage();
+      renderRosterTable();
+      renderStageTabs();
+    }
+
+    function generateBatchSlots() {
+      const stage = getActiveStage();
+      if (!stage) return;
+
+      const count = parseInt(document.getElementById('batchCountInput').value) || 6;
+      let startMins = 12 * 60;
+
+      for (let i = 1; i <= count; i++) {
+        const duration = 60;
+        const endMins = startMins + duration;
+
+        stage.roster.push({
+          id: 'act_' + Date.now() + '_' + i,
+          name: `Artist ${stage.roster.length + 1}`,
+          startTime: minutesToTime(startMins),
+          duration,
+          endMins,
+          endTime: minutesToTime(endMins),
+          mixer: 'Pioneer DJM-A9',
+          players: '4x Pioneer CDJ-3000',
+          effects: 'None',
+          keepSolo: false
+        });
+
+        startMins += duration;
+      }
+
+      stage.roster.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      saveStorage();
+      renderRosterTable();
+      renderStageTabs();
+    }
+
+    function renderRosterTable() {
+      const stage = getActiveStage();
+      const tbody = document.getElementById('rosterTableBody');
+      const roster = stage ? (stage.roster || []) : [];
+
+      document.getElementById('actCountBadge').innerText = `${roster.length} Act${roster.length === 1 ? '' : 's'}`;
+
+      if (roster.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-zinc-500">No performances on this stage yet. Add acts above or click Generate Slots!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = roster.map(act => `
+        <tr class="hover:bg-zinc-900/40 transition-colors">
+          <td class="py-2.5 px-3 font-bold text-white">${act.name}</td>
+          <td class="py-2.5 px-3 font-mono-code accent-color">${act.startTime}</td>
+          <td class="py-2.5 px-3 font-mono-code text-zinc-300">${act.endTime}</td>
+          <td class="py-2.5 px-3 text-zinc-400">${act.duration}m</td>
+          <td class="py-2.5 px-3 text-zinc-300">${act.mixer}</td>
+          <td class="py-2.5 px-3 text-zinc-300">${act.players}</td>
+          <td class="py-2.5 px-3 text-zinc-400">${act.effects}</td>
+          <td class="py-2.5 px-3 text-center">
+            ${act.keepSolo ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold accent-badge">SOLO</span>` : `<span class="text-zinc-600">—</span>`}
+          </td>
+          <td class="py-2.5 px-3 text-right">
+            <button onclick="deleteAct('${act.id}')" class="text-zinc-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </td>
+        </tr>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function deleteAct(id) {
+      const stage = getActiveStage();
+      if (!stage) return;
+      stage.roster = stage.roster.filter(a => a.id !== id);
+      saveStorage();
+      renderRosterTable();
+      renderStageTabs();
+    }
+
+    // FORMATTED SCHEDULE DOCUMENT EXPORT
+    function openFormattedScheduleModal() {
+      const fest = festivalDB[activeFestId];
+      const stage = getActiveStage();
+      if (!fest || !stage) return;
+
+      document.getElementById('docEventTitle').innerText = fest.name || "FESTIVAL EVENT";
+      document.getElementById('docStageTitle').innerText = `${stage.numberLabel}: ${stage.nickname || "MAINSTAGE"}`.toUpperCase();
+      document.getElementById('docEventDate').innerText = fest.date || "TBD";
+
+      const tbody = document.getElementById('docScheduleTableBody');
+      const roster = stage.roster || [];
+
+      if (roster.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-zinc-500 italic">No performances scheduled on this stage.</td></tr>`;
+      } else {
+        tbody.innerHTML = roster.map(act => `
+          <tr class="border-b border-zinc-200 hover:bg-zinc-50 font-medium">
+            <td class="p-2.5 border-r border-zinc-200 font-mono font-bold">${act.startTime}</td>
+            <td class="p-2.5 border-r border-zinc-200 font-mono text-zinc-600">${act.endTime}</td>
+            <td class="p-2.5 border-r border-zinc-200 font-bold">${act.name}</td>
+            <td class="p-2.5 border-r border-zinc-200 font-mono">${act.duration} mins</td>
+            <td class="p-2.5 border-r border-zinc-200">${act.mixer}</td>
+            <td class="p-2.5 border-r border-zinc-200">${act.players}</td>
+            <td class="p-2.5">${act.effects}</td>
+          </tr>
+        `).join('');
+      }
+
+      // Ensure export font applied
+      const exportFont = localStorage.getItem('RIZER_FONT_EXPORT') || "'Plus Jakarta Sans', sans-serif";
+      document.getElementById('printableDocArea').style.fontFamily = exportFont;
+
+      document.getElementById('formattedScheduleModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeFormattedScheduleModal() {
+      document.getElementById('formattedScheduleModal').classList.add('hidden');
+    }
+
+    // CORE RISER CALCULATION & COLLISION-FREE REORDERING
+    function calculateRisers() {
+      const stage = getActiveStage();
+      if (!stage || stage.roster.length === 0) {
+        alert("Please add at least one artist to the roster first.");
+        return;
+      }
+
+      const risers = [];
+
+      stage.roster.forEach(act => {
+        let assigned = false;
+
+        if (!act.keepSolo) {
+          for (let r of risers) {
+            if (r.hasSolo) continue;
+
+            const overlap = r.acts.some(existing => {
+              const aStart = timeToMinutes(act.startTime);
+              const aEnd = act.endMins;
+              const bStart = timeToMinutes(existing.startTime);
+              const bEnd = existing.endMins;
+              return Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+            });
+
+            if (!overlap && r.mixer === act.mixer && r.players === act.players && r.effects === act.effects) {
+              r.acts.push(act);
+              assigned = true;
+              break;
+            }
+          }
+        }
+
+        if (!assigned) {
+          const letter = ALPHABET_LETTERS[risers.length] || `R${risers.length + 1}`;
+          risers.push({
+            id: 'riser_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+            letter: letter,
+            mixer: act.mixer,
+            players: act.players,
+            effects: act.effects,
+            hasSolo: act.keepSolo,
+            acts: [act]
+          });
+        }
+      });
+
+      stage.allocatedRisers = risers;
+      saveStorage();
+      renderResults();
+
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function changeRiserLetter(riserId, newLetter) {
+      const stage = getActiveStage();
+      if (!stage || !stage.allocatedRisers) return;
+
+      const currentRiser = stage.allocatedRisers.find(r => r.id === riserId);
+      if (!currentRiser) return;
+
+      const oldLetter = currentRiser.letter;
+      if (oldLetter === newLetter) return;
+
+      const conflictingRiser = stage.allocatedRisers.find(r => r.letter === newLetter && r.id !== riserId);
+
+      currentRiser.letter = newLetter;
+      if (conflictingRiser) {
+        conflictingRiser.letter = oldLetter;
+      }
+
+      stage.allocatedRisers.sort((a, b) => a.letter.localeCompare(b.letter));
+
+      saveStorage();
+      renderResults();
+    }
+
+    function renderResults() {
+      document.getElementById('resultsSection').classList.remove('hidden');
+      const stage = getActiveStage();
+      if (!stage) return;
+
+      const grid = document.getElementById('risersGrid');
+      grid.innerHTML = (stage.allocatedRisers || []).map(r => {
+        const availableOptions = ALPHABET_LETTERS.slice(0, Math.max(12, stage.allocatedRisers.length + 4));
+
+        return `
+          <div class="bg-[#0d0d12] border border-zinc-800 rounded-2xl p-5 shadow-xl space-y-4 relative">
+            <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-zinc-400">Riser:</span>
+                  <select onchange="changeRiserLetter('${r.id}', this.value)" class="bg-zinc-900 border border-zinc-700 text-sm font-black accent-color rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer">
+                    ${availableOptions.map(letter => `
+                      <option value="${letter}" ${letter === r.letter ? 'selected' : ''}>${letter}</option>
+                    `).join('')}
+                  </select>
+                </div>
+              </div>
+
+              ${r.hasSolo ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold accent-badge">SOLO</span>` : `<span class="text-xs text-zinc-400 font-mono-code">${r.acts.length} Acts</span>`}
+            </div>
+
+            <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800 text-xs space-y-1">
+              <div class="text-zinc-300"><span class="text-zinc-500 font-medium">Mixer:</span> ${r.mixer}</div>
+              <div class="text-zinc-300"><span class="text-zinc-500 font-medium">Decks:</span> ${r.players}</div>
+              <div class="text-zinc-300"><span class="text-zinc-500 font-medium">FX:</span> ${r.effects}</div>
+            </div>
+
+            <div class="space-y-1.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Scheduled Acts</span>
+              ${r.acts.map(a => `
+                <div class="p-2 bg-zinc-900/40 rounded-lg text-xs flex justify-between">
+                  <span class="font-bold text-white">${a.name}</span>
+                  <span class="font-mono-code text-zinc-400">${a.startTime} - ${a.endTime}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="pt-2 border-t border-zinc-800/60 flex items-center justify-between text-[11px] text-zinc-500 font-mono-code">
+              <span>Deck Specification:</span>
+              <span class="text-white">2400 x 1200 Megadeck</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderSupplierGearTable();
+      lucide.createIcons();
+    }
+
+    // SUPPLIER GEAR TABLE (STRICT mm/ft WITH ZERO BRACKETS)
+    function renderSupplierGearTable() {
+      const stage = getActiveStage();
+      if (!stage) return;
+
+      const counts = {};
+      const legHeight = stage.legHeight || "600mm/2ft"; // STRICT mm/ft
+
+      (stage.allocatedRisers || []).forEach(r => {
+        if (r.mixer) counts[r.mixer] = (counts[r.mixer] || 0) + 1;
+        if (r.players) {
+          const match = r.players.match(/^(\d+)x\s+(.+)$/);
+          if (match) counts[match[2]] = (counts[match[2]] || 0) + parseInt(match[1]);
+          else counts[r.players] = (counts[r.players] || 0) + 1;
+        }
+        if (r.effects && r.effects !== 'None') {
+          counts[r.effects] = (counts[r.effects] || 0) + 1;
+        }
+      });
+
+      const deckCount = (stage.allocatedRisers || []).length;
+      if (deckCount > 0) {
+        counts['2400 x 1200 Megadeck (Rolling)'] = deckCount;
+        counts[`Stage Legs ${legHeight}`] = deckCount * 4; // STRICT mm/ft
+      }
+
+      // Merge attached packages
+      (stage.attachedPackages || []).forEach(pkg => {
+        (pkg.items || []).forEach(it => {
+          counts[`${it.name} (${pkg.name})`] = (counts[`${it.name} (${pkg.name})`] || 0) + it.qty;
+        });
+      });
+
+      const tbody = document.getElementById('gearTableBody');
+      tbody.innerHTML = Object.keys(counts).map(item => `
+        <tr class="hover:bg-zinc-900/40">
+          <td class="py-2.5 px-3 font-semibold text-white">${item}</td>
+          <td class="py-2.5 px-3 text-center font-mono-code text-zinc-400">${counts[item]}</td>
+          <td class="py-2.5 px-3 text-center font-mono-code text-zinc-500">—</td>
+          <td class="py-2.5 px-3 text-right font-mono-code font-bold accent-color">${counts[item]}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderPackagesPicker() {
+      const select = document.getElementById('stagePackagePicker');
+      if (!select) return;
+      select.innerHTML = equipmentPackages.map(p => `
+        <option value="${p.id}">${p.name} (${p.items.length} items)</option>
+      `).join('');
+    }
+
+    function attachPackageToStage() {
+      const stage = getActiveStage();
+      if (!stage) return;
+      const select = document.getElementById('stagePackagePicker');
+      const pkg = equipmentPackages.find(p => p.id === select.value);
+      if (pkg) {
+        if (!stage.attachedPackages) stage.attachedPackages = [];
+        stage.attachedPackages.push(JSON.parse(JSON.stringify(pkg)));
+        saveStorage();
+        renderSupplierGearTable();
+      }
+    }
+
+    function exportSupplierGearCSV() {
+      const fest = festivalDB[activeFestId];
+      const stage = getActiveStage();
+      if (!fest || !stage) return;
+
+      const counts = {};
+      const legHeight = stage.legHeight || "600mm/2ft"; // STRICT mm/ft
+
+      (stage.allocatedRisers || []).forEach(r => {
+        if (r.mixer) counts[r.mixer] = (counts[r.mixer] || 0) + 1;
+        if (r.players) {
+          const match = r.players.match(/^(\d+)x\s+(.+)$/);
+          if (match) counts[match[2]] = (counts[match[2]] || 0) + parseInt(match[1]);
+          else counts[r.players] = (counts[r.players] || 0) + 1;
+        }
+        if (r.effects && r.effects !== 'None') counts[r.effects] = (counts[r.effects] || 0) + 1;
+      });
+
+      const deckCount = (stage.allocatedRisers || []).length;
+      if (deckCount > 0) {
+        counts['2400 x 1200 Megadeck (Rolling)'] = deckCount;
+        counts[`Stage Legs ${legHeight}`] = deckCount * 4; // STRICT mm/ft
+      }
+
+      (stage.attachedPackages || []).forEach(pkg => {
+        (pkg.items || []).forEach(it => {
+          counts[`${it.name} (${pkg.name})`] = (counts[`${it.name} (${pkg.name})`] || 0) + it.qty;
+        });
+      });
+
+      let csv = `EVENT,${csvQuote(fest.name || "Event")}\n`;
+      csv += `STAGE,${csvQuote(stage.numberLabel + (stage.nickname ? ` - ${stage.nickname}` : ''))}\n`;
+      csv += `DATE,${csvQuote(fest.date || "TBD")}\n`;
+      csv += `DOCUMENT,CONSOLIDATED SUPPLIER EQUIPMENT ORDER\n\n`;
+      csv += `EQUIPMENT ITEM,TOTAL QUANTITY\n`;
+
+      Object.keys(counts).forEach(k => {
+        csv += `${csvQuote(k)},${counts[k]}\n`;
+      });
+
+      downloadFile(csv, `Supplier_Gear_Order_${stage.numberLabel}.csv`, 'text/csv');
+    }
+
+    function exportRiserScheduleCSV() {
+      const stage = getActiveStage();
+      if (!stage) return;
+      let csv = "RISER,ARTIST,START,END,DURATION,MIXER,DECKS,EFFECTS\n";
+      (stage.allocatedRisers || []).forEach(r => {
+        r.acts.forEach(a => {
+          csv += `"${r.letter}","${a.name}","${a.startTime}","${a.endTime}","${a.duration}m","${a.mixer}","${a.players}","${a.effects}"\n`;
+        });
+      });
+      downloadFile(csv, `Riser_Schedule_${stage.numberLabel}.csv`, 'text/csv');
+    }
+
+    // SHOW VIEW & DUAL QR
+    function renderShowView() {
+      const stage = getActiveStage();
+      if (!stage) return;
+
+      document.getElementById('showBannerStageTitle').innerText = `${stage.numberLabel}: ${stage.nickname || 'Stage'}`;
+      document.getElementById('showRosterActCount').innerText = `${stage.roster.length} Acts`;
+
+      generateDualQRs();
+      renderShowTimeline();
+    }
+
+    function getKioskShareURL(viewType) {
+      const base = window.location.href.split('#')[0];
+      return `${base}#view=${viewType}`;
+    }
+
+    function generateDualQRs() {
+      const sBox = document.getElementById('stageViewQRCode');
+      const fBox = document.getElementById('fohViewQRCode');
+      sBox.innerHTML = '';
+      fBox.innerHTML = '';
+
+      new QRCode(sBox, {
+        text: getKioskShareURL('stage'),
+        width: 170,
+        height: 170,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+
+      new QRCode(fBox, {
+        text: getKioskShareURL('foh'),
+        width: 170,
+        height: 170,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    function copyKioskLink(type) {
+      const url = getKioskShareURL(type);
+      navigator.clipboard.writeText(url).then(() => {
+        const el = document.getElementById(type === 'stage' ? 'copyStageFeedback' : 'copyFOHFeedback');
+        if (el) {
+          el.innerText = 'Copied direct link!';
+          setTimeout(() => { el.innerText = ''; }, 2000);
+        }
+      });
+    }
+
+    function openStandaloneKioskWindow(type) {
+      window.open(getKioskShareURL(type), `_kiosk_${type}`);
+    }
+
+    function renderShowTimeline() {
+      const stage = getActiveStage();
+      const tbody = document.getElementById('showTimelineBody');
+      const roster = stage ? (stage.roster || []) : [];
+
+      if (roster.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-zinc-500">No performances on this runsheet.</td></tr>`;
+        return;
+      }
+
+      const now = new Date();
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+
+      tbody.innerHTML = roster.map(act => {
+        let status = `<span class="px-2 py-0.5 rounded text-[10px] font-mono-code bg-zinc-800 text-zinc-400">UPCOMING</span>`;
+        if (currentMins >= act.endMins) {
+          status = `<span class="px-2 py-0.5 rounded text-[10px] font-mono-code bg-zinc-900 text-zinc-600">DONE</span>`;
+        } else if (currentMins >= timeToMinutes(act.startTime) && currentMins < act.endMins) {
+          status = `<span class="px-2 py-0.5 rounded text-[10px] font-mono-code bg-emerald-500/20 text-emerald-400 font-bold animate-pulse">PLAYING</span>`;
+        }
+
+        return `
+          <tr class="hover:bg-zinc-900/40">
+            <td class="py-2.5 px-3">${status}</td>
+            <td class="py-2.5 px-3 font-bold text-white">${act.name}</td>
+            <td class="py-2.5 px-3 font-mono-code text-emerald-400">${act.startTime}</td>
+            <td class="py-2.5 px-3 font-mono-code text-zinc-300">${act.endTime}</td>
+            <td class="py-2.5 px-3 text-zinc-400">${act.duration}m</td>
+            <td class="py-2.5 px-3 text-zinc-300">${act.mixer}</td>
+            <td class="py-2.5 px-3 text-zinc-300">${act.players}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function startKioskTimer(mode) {
+      setInterval(() => {
+        const stage = getActiveStage();
+        if (!stage) return;
+
+        const now = new Date();
+        const currentMins = now.getHours() * 60 + now.getMinutes();
+        const currentSecs = now.getSeconds();
+
+        let nowAct = null;
+        let nextAct = null;
+
+        (stage.roster || []).forEach((act, idx) => {
+          const startM = timeToMinutes(act.startTime);
+          if (currentMins >= startM && currentMins < act.endMins) {
+            nowAct = act;
+            nextAct = stage.roster[idx + 1] || null;
+          } else if (currentMins < startM && !nextAct) {
+            if (!nowAct) nextAct = act;
+          }
+        });
+
+        const countdownStr = nowAct
+          ? formatTimeRemaining((nowAct.endMins * 60) - (currentMins * 60 + currentSecs))
+          : "00:00:00";
+
+        if (mode === 'stage') {
+          document.getElementById('kioskStageArtist').innerText = nowAct ? nowAct.name : "NO ACT PLAYING";
+          document.getElementById('kioskStageCountdown').innerText = countdownStr;
+          document.getElementById('kioskStageTimeslot').innerText = nowAct ? `Set: ${nowAct.startTime} - ${nowAct.endTime}` : "Set: --:-- - --:--";
+        } else {
+          document.getElementById('kioskFOHArtist').innerText = nowAct ? nowAct.name : "NO ACT PLAYING";
+          document.getElementById('kioskFOHCountdown').innerText = countdownStr;
+          document.getElementById('kioskFOHTimeslot').innerText = nowAct ? `Set: ${nowAct.startTime} - ${nowAct.endTime}` : "Set: --:-- - --:--";
+          document.getElementById('kioskFOHNext').innerText = nextAct ? `${nextAct.name} (${nextAct.startTime})` : "None Scheduled";
+          document.getElementById('kioskFOHClock').innerText = now.toTimeString().split(' ')[0];
+        }
+      }, 1000);
+    }
+
+    function formatTimeRemaining(totalSecs) {
+      if (isNaN(totalSecs) || totalSecs < 0) return "00:00:00";
+      const h = Math.floor(totalSecs / 3600);
+      const m = Math.floor((totalSecs % 3600) / 60);
+      const s = Math.floor(totalSecs % 60);
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    // SETTINGS HUB CONTROLLER
+    function selectSettingsCategory(catId) {
+      const cats = ['general', 'appearance', 'equipment', 'network'];
+      cats.forEach(c => {
+        document.getElementById(`setPanel_${c}`).classList.toggle('hidden', c !== catId);
+        const btn = document.getElementById(`setNav_${c}`);
+        if (c === catId) {
+          btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all accent-bg text-black shadow-sm";
+        } else {
+          btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-left transition-all text-zinc-400 hover:text-white hover:bg-zinc-900";
+        }
+      });
+      lucide.createIcons();
+    }
+
+    function renderSettingsView() {
+      const fest = festivalDB[activeFestId];
+      const stage = getActiveStage();
+      if (!fest || !stage) return;
+
+      document.getElementById('settingsFestName').value = fest.name || '';
+      document.getElementById('settingsFestDate').value = fest.date || '';
+      document.getElementById('settingsStageLegSelect').value = stage.legHeight || '600mm/2ft';
+
+      // Render Stage list inside General settings
+      const stList = document.getElementById('settingsStageList');
+      stList.innerHTML = Object.values(fest.stages || {}).map(st => `
+        <div class="flex items-center gap-2 bg-zinc-900 p-2.5 rounded-xl border border-zinc-800 text-xs">
+          <span class="font-bold text-white w-20">${st.numberLabel}</span>
+          <input type="text" value="${st.nickname || ''}" onchange="updateStageNicknameDirect('${st.id}', this.value)" placeholder="Stage Nickname" class="flex-1 bg-black border border-zinc-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none">
+          <button onclick="deleteStageDirect('${st.id}')" class="text-zinc-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+        </div>
+      `).join('');
+
+      renderIndividualEquipmentList();
+      renderEquipmentPackagesList();
+      renderOSCMessageList();
+      loadTypographyPreferences();
+      lucide.createIcons();
+    }
+
+    function updateFestivalMetadataFromSettings() {
+      const fest = festivalDB[activeFestId];
+      if (!fest) return;
+      fest.name = document.getElementById('settingsFestName').value.trim();
+      fest.date = document.getElementById('settingsFestDate').value;
+      saveStorage();
+      renderFestivalSelectors();
+    }
+
+    function updateStageNicknameDirect(sId, val) {
+      const fest = festivalDB[activeFestId];
+      if (fest && fest.stages[sId]) {
+        fest.stages[sId].nickname = val.trim();
+        saveStorage();
+        renderStageTabs();
+      }
+    }
+
+    function deleteStageDirect(sId) {
+      const fest = festivalDB[activeFestId];
+      if (!fest) return;
+      if (Object.keys(fest.stages).length <= 1) {
+        alert("You must keep at least one stage.");
+        return;
+      }
+      delete fest.stages[sId];
+      activeStageId = Object.keys(fest.stages)[0];
+      saveStorage();
+      renderAll();
+      renderSettingsView();
+    }
+
+    function updateStageLegsFromSettings(val) {
+      const stage = getActiveStage();
+      if (!stage) return;
+      stage.legHeight = val; // Strictly mm/ft
+      saveStorage();
+      renderSupplierGearTable();
+    }
+
+    // EQUIPMENT BUILDER (DRAG & DROP)
+    function renderIndividualEquipmentList() {
+      const el = document.getElementById('individualEquipmentList');
+      el.innerHTML = individualEquipmentLibrary.map(item => `
+        <div draggable="true" ondragstart="handleItemDragStart(event, '${item.id}')" class="p-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs flex items-center justify-between cursor-grab hover:border-zinc-700 active:cursor-grabbing">
+          <div>
+            <span class="font-bold text-white block">${item.name}</span>
+            <span class="text-[10px] text-zinc-500 font-mono-code">${item.category}</span>
+          </div>
+          <i data-lucide="grip-vertical" class="w-3.5 h-3.5 text-zinc-600"></i>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function promptNewIndividualItem() {
+      const name = prompt("Equipment Item Name:");
+      if (!name) return;
+      const cat = prompt("Category (e.g. Audio, Lighting, Stage Hardware):") || "General";
+      individualEquipmentLibrary.push({
+        id: 'eq_' + Date.now(),
+        name: name.trim(),
+        category: cat.trim()
+      });
+      renderIndividualEquipmentList();
+    }
+
+    function renderEquipmentPackagesList() {
+      const container = document.getElementById('equipmentPackagesList');
+      container.innerHTML = equipmentPackages.map(pkg => `
+        <div ondragover="handleDragOver(event)" ondrop="handleItemDrop(event, '${pkg.id}')" class="p-3 bg-zinc-900/80 border-2 border-dashed border-zinc-800 hover:border-[#ff6600]/60 rounded-xl space-y-2 transition-all">
+          <div class="flex items-center justify-between border-b border-zinc-800 pb-1.5">
+            <div>
+              <h5 class="font-bold text-white text-xs">${pkg.name}</h5>
+              <span class="text-[10px] font-mono-code text-zinc-500">${pkg.category}</span>
+            </div>
+            <button onclick="deletePackageTemplate('${pkg.id}')" class="text-zinc-600 hover:text-red-400 p-0.5"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>
+
+          <div class="space-y-1">
+            ${pkg.items.map((it, idx) => `
+              <div class="flex items-center justify-between text-[11px] text-zinc-300 bg-zinc-950/60 p-1.5 rounded">
+                <span>${it.name}</span>
+                <div class="flex items-center gap-1.5 font-mono-code">
+                  <span class="text-zinc-500">x</span>
+                  <input type="number" min="1" value="${it.qty}" onchange="updatePackageItemQty('${pkg.id}', ${idx}, this.value)" class="w-10 bg-black border border-zinc-700 rounded px-1 text-center text-white">
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="text-center text-[10px] text-zinc-500 pt-1">
+            Drop individual items here to add
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function promptCreateNewPackage() {
+      const name = prompt("Package Name (e.g. Backline Extra Kit):");
+      if (!name) return;
+      const cat = prompt("Package Category (e.g. Audio, Stage, DJ):") || "General";
+      equipmentPackages.push({
+        id: 'pkg_' + Date.now(),
+        name: name.trim(),
+        category: cat.trim(),
+        items: []
+      });
+      renderEquipmentPackagesList();
+      renderPackagesPicker();
+    }
+
+    function deletePackageTemplate(pkgId) {
+      equipmentPackages = equipmentPackages.filter(p => p.id !== pkgId);
+      renderEquipmentPackagesList();
+      renderPackagesPicker();
+    }
+
+    function updatePackageItemQty(pkgId, itemIdx, val) {
+      const pkg = equipmentPackages.find(p => p.id === pkgId);
+      if (pkg && pkg.items[itemIdx]) {
+        pkg.items[itemIdx].qty = parseInt(val) || 1;
+      }
+    }
+
+    function handleItemDragStart(e, itemId) {
+      e.dataTransfer.setData('text/plain', itemId);
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+    }
+
+    function handleItemDrop(e, pkgId) {
+      e.preventDefault();
+      const itemId = e.dataTransfer.getData('text/plain');
+      const item = individualEquipmentLibrary.find(i => i.id === itemId);
+      const pkg = equipmentPackages.find(p => p.id === pkgId);
+
+      if (item && pkg) {
+        const existing = pkg.items.find(i => i.name === item.name);
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          pkg.items.push({ name: item.name, qty: 1 });
+        }
+        renderEquipmentPackagesList();
+        renderPackagesPicker();
+      }
+    }
+
+    function renderOSCMessageList() {
+      const container = document.getElementById('oscMessageList');
+      container.innerHTML = DEFAULT_OSC_MESSAGES.map(m => `
+        <div class="p-2 bg-zinc-900 border border-zinc-800 rounded-lg flex items-center justify-between">
+          <div>
+            <span class="text-zinc-200 font-bold block">${m.label}</span>
+            <span class="text-[10px] text-emerald-400 font-mono-code">${m.path} [${m.val}]</span>
+          </div>
+          <span class="px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-400 font-mono-code">OSC READY</span>
+        </div>
+      `).join('');
+    }
+
+    // THEME & ACCENT CONTROLLER
+    function setAppThemeMode(mode) {
+      const html = document.getElementById('htmlRoot');
+      html.classList.remove('theme-light', 'theme-dark');
+      if (mode === 'light') html.classList.add('theme-light');
+      else if (mode === 'dark') html.classList.add('theme-dark');
+      localStorage.setItem('RIZER_THEME_MODE', mode);
+    }
+
+    function setAppAccentColor(hex) {
+      if (!hex) return;
+      document.documentElement.style.setProperty('--accent-color', hex);
+      const rgb = hexToRgb(hex);
+      if (rgb) {
+        document.documentElement.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+      }
+      localStorage.setItem('RIZER_COLOR_ACCENT', hex);
+
+      const colorPicker = document.getElementById('customColorPicker');
+      const colorHexInput = document.getElementById('customColorHex');
+      if (colorPicker) colorPicker.value = hex;
+      if (colorHexInput) colorHexInput.value = hex;
+    }
+
+    function hexToRgb(hex) {
+      const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+      hex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    }
+
+    // UTILITIES
+    function csvQuote(str) {
+      return `"${String(str).replace(/"/g, '""')}"`;
+    }
+
+    function downloadFile(content, fileName, type) {
+      const blob = new Blob([content], { type });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = fileName;
+      a.click();
+    }
+  </script>
+</body>
+</html>
